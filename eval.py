@@ -44,6 +44,9 @@ def evaluate_translation(file_path: str):
             source = dta["src"]
             translation = dta["tgt"]
 
+            if key == "titles":
+                continue
+
             system_prompt = """You are a meticulous and strict AI Translation Quality Evaluator working for Klook, an online travel company.
 Your mission is to strictly evaluate English-to-Korean translations for tourism-related content. You must check for semantic consistency, cultural appropriateness for Korean travelers, and natural Korean expression.
 
