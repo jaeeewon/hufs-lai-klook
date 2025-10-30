@@ -1,7 +1,7 @@
 import requests
 import json
 
-# run `python -m vllm.entrypoints.openai.api_server   --model Qwen/Qwen3-8B   --tensor-parallel-size 4   --host 0.0.0.0   --port 8080`
+# run `python -m vllm.entrypoints.openai.api_server   --model Qwen/Qwen3-30B-A3B-Instruct-2507   --tensor-parallel-size 4   --host 0.0.0.0   --port 8080`
 
 
 def qwen3_api(
@@ -11,7 +11,7 @@ def qwen3_api(
     headers = {"Content-Type": "application/json"}
 
     payload = {
-        "model": "Qwen/Qwen3-32B",
+        "model": "Qwen/Qwen3-30B-A3B-Instruct-2507",
         "messages": [
             {"role": "user", "content": user_prompt},
         ],
@@ -29,6 +29,7 @@ def qwen3_api(
             "http://klook.hufs.jae.one:8080/v1/chat/completions",
             headers=headers,
             data=json.dumps(payload),
+            timeout=30
         )
 
         response_data = response.json()
@@ -37,6 +38,7 @@ def qwen3_api(
             .replace("```json", "")
             .replace("```", "")
             .replace("\\n", "\n")
+            .replace("\n", " ")
             .strip()
         )
 
