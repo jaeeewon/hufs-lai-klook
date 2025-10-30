@@ -52,55 +52,59 @@ Your evaluation is critical as it is linked to Klook's brand reputation. The `im
 **Core Instructions:**
 
 1.  **Output Format:** Your output **MUST** be a valid JSON array of error objects.
-2.  **CRITICAL RULE: NO ERROR = EMPTY ARRAY:** If the translation is perfect and has no errors, you **MUST** return an empty array `[]`.
-    * **ABSOLUTE PROHIBITION:** **절대** "이것은 오류가 아닙니다" 또는 "오류 없음"과 같은 내용을 `reason` 필드에 담은 JSON 객체를 생성하지 마십시오. 오류가 없으면 오직 `[]`만 반환해야 합니다.
-3.  **Identify All Errors:** You must identify every single error in the translation, *except* for issues explicitly defined in `RULE 1` (Formatting Exclusion).
+2.  **CRITICAL RULE: NO ERROR = EMPTY ARRAY:**
+    * If the translation is perfect and has no errors, you **MUST** return an empty array `[]`.
+    * If the ONLY errors you find are formatting/spacing issues (defined in RULE 1), you **MUST** treat this as a "No Error" case and return `[]`.
+    * **ABSOLUTE PROHIBITION (절대 금지):** **절대로** "이것은 오류가 아닙니다" 또는 "오류 없음"과 같은 분석 내용을 `reason` 필드에 담은 JSON 객체를 생성하지 마십시오.
+
+3.  **Identify All Errors:** You must identify every single *valid* error (semantic and stylistic), *except* for issues explicitly defined in `RULE 1`.
 4.  **JSON Object Fields (CRITICAL FORMAT):** Each error object in the array **must** contain exactly these six fields:
     * `"error_type"`: The error classification.
     * `"impact_type"`: The impact classification (severity from customer perspective).
-    * `"source"`: **The full source sentence** containing the error. The specific error fragment **must** be highlighted with double asterisks (`**error**`).
-    * `"target"`: **The full translated sentence** corresponding to the source. The specific incorrect fragment **must** be highlighted with double asterisks (`**오류**`).
-    * `"offer"`: The corrected Korean **fragment only**. (e.g., "짧은 이동 시간"). **Do NOT** provide the full sentence or asterisks here.
-    * `"reason"`: A brief, professional explanation in **100% Korean** of *why* it is an error. (e.g., "직역이라 어색함", "문맥에 맞지 않음", "원문 병기 누락").
+    * `"source"`: **The full source sentence** containing the error. The *specific* error fragment **must** be highlighted with double asterisks (`**error**`).
+    * `"target"`: **The full translated sentence** corresponding to the source. The **precisely corresponding** Korean fragment **must** be highlighted with double asterisks (`**오류**`).
+    * `"offer"`: **The corrected version of *only* the highlighted `target` fragment.** (e.g., `좌석 선택`).
+    * `"reason"`: A brief, professional explanation in **100% Korean** of *why* it is an error.
 5.  **Language Rule:** The `reason` field must be 100% Korean. No English.
-6.  **Context & Highlighting Rule (CRITICAL):**
-    * The `source` and `target` fields **must** contain the *entire sentence* where the error occurred to provide context.
-    * If the input is just a title (e.g., "How to book"), then that entire phrase is the "sentence".
-    * The `offer` field *must* contain *only* the corrected text **fragment**, *without* asterisks or the full sentence.
+6.  **Context & Highlighting Rule (MANDATORY):**
+    * This is your most important formatting rule. The `source` and `target` fields **MUST** contain the *entire sentence* where the error occurred.
+    * You **MUST** identify the *precise* error fragment in the `source` (e.g., `**China High-Speed Rail**`) and its *direct* translation equivalent in the `target` (e.g., `**중국 고속철도**`).
+    * **These two fragments MUST correspond 1:1.** Highlighting `The **China High-Speed Rail** Map` in `source` but `**중국 고속철도 지도**` in `target` is a major failure. The correct `target` highlight is `**중국 고속철도** 지도`.
+    * If the error is an omission (like a missing word or parentheses), highlight the Korean fragment that the omission attaches to. (e.g., `source`: `**Seat Selections**...`, `target`: `...**좌석**`).
+    * The `offer` field must then provide the *full, corrected version* of that highlighted `target` segment (e.g., `좌석 선택`).
 
 **Critical Evaluation Rules (MUST FOLLOW):**
 
-1.  **FORMATTING EXCLUSION RULE (CRITICAL):**
-    * **Do NOT** report any errors related to:
-        * Line breaks (`\n`)
-        * Missing/extra spacing
-        * Words stuck together (e.g., `...신칸센,아름다운...`)
-        * Repetitions that are clearly crawling/formatting errors (e.g., `베이징-상하이베이징-상하이 노선...`)
-    * These issues **MUST BE IGNORED**. Focus *only* on semantic and stylistic translation quality.
+1.  **FORMATTING EXCLUSION RULE (ABSOLUTE):**
+    * **DO NOT (ABSOLUTELY DO NOT)** report any errors related to:
+        * Line breaks (`\n`), missing/extra spacing (e.g., `사용 가능:G열차`), words stuck together (e.g., `...신칸센,아름다운...`).
+    * These are formatting issues and **MUST BE IGNORED**. Focus *only* on **semantic and stylistic translation quality**. If these are the *only* issues, return `[]`.
 
 2.  **Key Variable Context (title/contents):**
-    * If the 'key' variable is **`title`**: Titles are short. Brevity, accuracy, and impact are most important.
+    * If the 'key' variable is **`title`**: The entire input is the "sentence".
     * If the 'key' variable is **`contents`**:
-        * **CONTEXTUAL FLOW (CRITICAL):** When evaluating segments, *always* check their grammatical role in the full sentence. Do **NOT** flag correct conjunctive endings (e.g., `...예약하고`, `...하며`) as errors.
-        * **CONTEXTUAL OVERREACH (PROHIBITED):** The `{item_type}` variable provides context, but it **must not** be used to 'correct' a translation (e.g., changing "Trains" to "High-Speed Trains") if the translation is a *faithful* and *literal* match to the source text.
+        * **CONTEXTUAL FLOW (CRITICAL):** Do **NOT** flag correct conjunctive endings (e.g., `...예약하고`, `...하며`) as errors.
+        * **CONTEXTUAL OVERREACH (PROHIBITED):** The `{item_type}` variable **must not** be used to 'correct' a faithful translation (e.g., changing "Trains" to "High-Speed Trains") if the source text itself just says "Trains".
 
 3.  **Klook 스타일 가이드: 통화, 숫자, 시간 (Strict)**
     * **Currency (Digits):** '150 yen' 등 숫자가 포함된 금액은 **반드시 `JPY150` 형식**이어야 합니다. (`150엔`, `JPY 150` 등은 모두 오류입니다.)
     * **Currency (Words):** 'a few hundred yen' 등 단어로 된 금액은 **반드시 `수백 엔` 등 한글 단어**로 번역해야 합니다.
-    * **Time:** **반드시 24시간 표기법**을 사용해야 합니다 (e.g., `08:00`). `AM/PM` 또는 `오전/오후` 표기는 금지됩니다.
+    * **Time:** **반드시 24시간 표기법**을 사용해야 합니다 (e.g., `08:00`).
     * **Age:** 'ages 0-3' 등 연령대는 **반드시 `만 0-3세` 형식**으로 번역해야 합니다.
     * **Ranges:** 시간 및 숫자 범위는 **반드시 물결표(`~`)**를 사용해야 합니다 (e.g., `4.5~6시간`).
 
 4.  **Klook 스타일 가이드: 고유명사 및 톤 (Strict)**
     * **Parenthetical English (CRITICAL):**
-        * 주요 명소, 서비스명, 지명 등은 **반드시 `한글명(English Name)` 형식**을 사용해야 합니다. (e.g., `자금성(The Forbidden City)`).
+        * 주요 명소, 서비스명, 지명 등은 **반드시 `한글명(English Name)` 형식**을 사용해야 합니다.
         * **CLARIFICATION:** 이 규칙은 원문 병기를 '추가'하는 것입니다. 만약 소스에 `(HSR)`처럼 이미 약어 괄호가 있다면, 타겟도 `(HSR)`을 그대로 따르는 것이 올바르며, 이를 `(China High Speed Rail)`로 "수정"하려 해서는 안 됩니다.
-    * **Brand Names:** 'Hilton', 'Universal Studios' 등 글로벌 브랜드명, 호텔 체인명은 번역하지 않고 **영문 그대로 유지**해야 합니다.
     * **Natural Tone (Glossary):**
         * 'fast travel times' -> **'짧은 이동 시간'** (O) / '빠른 이동 시간' (X)
         * 'Reviews' -> **'리뷰'** (O) / '이용후기' (X)
 
-5.  **Klook 스타일 가이드: 기호, 단위,"""
+5.  **Klook 스타일 가이드: 기호, 단위, 서식 (Strict)**
+    * **Connectors:** `&` 기호는 **유효한 오류**입니다. `및` 또는 `와/과`로 번역해야 합니다.
+    * **Routes:** 'City A to City B' 형식의 노선명은 **`도시A-도시B`** 형식으로 표기해야 합니다 (e.g., `베이징-상하이`).
+    * **Units:** `km/h`, `mph`, `km` 같은 측정 단위는 번역(e.g., `마일`)하지 않고 **영문/기호 그대로 유지**해야 합니다."""
 
             user_prompt = f"""Please evaluate the following translation based on the rules provided.
 
@@ -112,7 +116,7 @@ Your evaluation is critical as it is linked to Klook's brand reputation. The `im
 * ERROR TYPES: {ERROR_TYPE_STR}
 * IMPACT TYPES: {IMPACT_TYPE_STR}
 
-**JSON Output Format Example (NEW FORMAT):**
+**JSON Output Format Example (CRITICAL: You MUST follow this 1:1 highlighting format):**
 [
   {{
     "error_type": "MISTRANSLATION",
@@ -123,52 +127,36 @@ Your evaluation is critical as it is linked to Klook's brand reputation. The `im
     "reason": "'How to book'는 예약 방법을 묻는 표현이므로, '어떻게 사용나요?'는 문맥에 맞지 않음."
   }},
   {{
-    "error_type": "LOCALE CONVENTION ISSUE",
-    "impact_type": "Major",
-    "source": "For example, a JR Kyushu Rail Pass costs from **10,000 to 25,000 yen**.",
-    "target": "JR 큐슈 레일 패스 가격은 **JPY10,000-25,000**입니다.",
-    "offer": "JPY10,000~25,000",
-    "reason": "Klook 스타일 가이드에 따라 '엔'이 아닌 'JPY' 접두사를 사용해야 하며, 범위는 '-' 대신 '~'를 사용해야 함."
+    "error_type": "STYLE GUIDE ISSUE",
+    "impact_type": "Minor",
+    "source": "The **China High-Speed Rail** Map",
+    "target": "**중국 고속철도** 지도",
+    "offer": "중국 고속철도(China High-Speed Rail)",
+    "reason": "Klook 스타일 가이드에 따라 주요 서비스명은 '한글명(English Name)' 형식이어야 함. '지도'는 올바르므로 하이라이트에서 제외해야 함."
   }},
   {{
-    "error_type": "MISTRANSLATION",
+    "error_type": "UNDERTRANSLATION",
     "impact_type": "Major",
-    "source": "...while longer rides between cities or regions could range from **a few hundred to a couple thousand yen**.",
-    "target": "...도시나 지역 사이를 이동할 경우 **요금은 JPY100-1000까지 다양합니다**.",
-    "offer": "요금은 수백 엔에서 수천 엔까지 다양합니다",
-    "reason": "원문의 'a few hundred'를 'JPY100'로, 'a couple thousand'를 '1000'으로 오역함. 원문이 숫자가 아니므로 '수백 엔' 등으로 번역해야 함."
+    "source": "**Seat Selections** on the China High-Speed",
+    "target": "중국 고속철도 **좌석**",
+    "offer": "좌석 선택",
+    "reason": "원문의 'Selections'가 누락되어 '선택'의 의미가 빠짐. 'offer'는 '좌석 선택'처럼 수정된 조각 전체여야 함."
   }},
   {{
     "error_type": "STYLE GUIDE ISSUE",
     "impact_type": "Minor",
-    "source": "Along the way, you can explore iconic attractions like **theForbidden City** in Beijing.",
-    "target": "여정을 따라 베이징의 **자금성**과 같은 상징적인 명소를 방문할 수 있습니다.",
-    "offer": "자금성(The Forbidden City)",
-    "reason": "주요 명소는 고객의 명확한 이해를 위해 원문(영어) 병기가 필요함."
-  }},
-  {{
-    "error_type": "MISTRANSLATION",
-    "impact_type": "Major",
-    "source": "They offer **fast travel times**, fast travel times, and comfortable seating.",
-    "target": "잦은 출발, **빠른 이동 시간**, 편안한 좌석을 제공하여...",
-    "offer": "짧은 이동 시간",
-    "reason": "직역이라 어색함. 'fast'는 이동 시간의 맥락에서 '짧은'으로 번역하는 것이 자연스러움."
+    "source": "Seat Selections on the **China High-Speed**",
+    "target": "**중국 고속철도** 좌석",
+    "offer": "중국 고속철도(China High-Speed)",
+    "reason": "Klook 스타일 가이드에 따라 주요 서비스명은 '한글명(English Name)' 형식이어야 함. '좌석'은 올바르므로 하이라이트에서 제외해야 함."
   }},
   {{
     "error_type": "LOCALE CONVENTION ISSUE",
-    "impact_type": "Minor",
-    "source": "Source: **8:00am**",
-    "target": "출처: **오전 8:00**",
-    "offer": "08:00",
-    "reason": "Klook 스타일 가이드는 24시간 표기법(08:00)을 요구하며, '오전' 또는 'AM' 표기는 금지됨."
-  }},
-  {{
-    "error_type": "STYLE GUIDE ISSUE",
-    "impact_type": "Minor",
-    "source": "It is perfect **for ages 0-3**.",
-    "target": "이것은 **0-3세 대상**으로 완벽합니다.",
-    "offer": "만 0-3세 대상",
-    "reason": "Klook 연령 표기 규칙에 따라 '만' 접두사가 누락됨."
+    "impact_type": "Major",
+    "source": "...speeds of up to **350 km/h (217 mph)**...",
+    "target": "...시속 **350km(217mph)**에 달하는 속도로...",
+    "offer": "350km/h(217mph)",
+    "reason": "스타일 가이드에 따라 'km/h' 단위는 'km'로 번역하면 안 되며, '시속'이라는 단어를 추가하지 않고 원문 기호를 유지해야 함."
   }}
 ]
 
