@@ -1,7 +1,8 @@
 import requests
 import json
 
-# run `python -m vllm.entrypoints.openai.api_server   --model openai/gpt-oss-20b   --tensor-parallel-size 4   --host 0.0.0.0   --port 8080`
+# run `CUDA_VISIBLE_DEVICES=0,1 python -m vllm.entrypoints.openai.api_server   --model openai/gpt-oss-20b   --tensor-parallel-size 2   --host 0.0.0.0   --port 8080`
+# run `CUDA_VISIBLE_DEVICES=0,1 python -m vllm.entrypoints.openai.api_server --model LGAI-EXAONE/EXAONE-4.0.1-32B --enable-auto-tool-choice --tool-call-parser hermes --reasoning-parser deepseek_r1 --tensor-parallel-size 2   --host 0.0.0.0   --port 8080`
 
 
 def qwen3_api(
@@ -11,12 +12,13 @@ def qwen3_api(
     headers = {"Content-Type": "application/json"}
 
     payload = {
+        # "model": "LGAI-EXAONE/EXAONE-4.0.1-32B",
         "model": "openai/gpt-oss-20b",
         "messages": [
             {"role": "user", "content": user_prompt},
         ],
         # "max_tokens": 1024,
-        "chat_template_kwargs": {"enable_thinking": False},
+        # "chat_template_kwargs": {"enable_thinking": False},
         "seed": 42,
     }
 
@@ -26,7 +28,7 @@ def qwen3_api(
     response = None
     try:
         response = requests.post(
-            "http://klook.hufs.jae.one:8080/v1/chat/completions",
+            "http://klook_llm.hufs.jae.one:1001/v1/chat/completions",
             headers=headers,
             data=json.dumps(payload),
             timeout=300,
