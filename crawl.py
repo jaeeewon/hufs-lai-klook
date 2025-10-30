@@ -40,7 +40,7 @@ def crawl_url(url: str, cache=True, cache_dir=".cache/", file_name=None):
 
 def crawl_with_selenium(urls: list[str]) -> list[str]:
     htmls = []
-    with SafeSeleniumDriver("http://klook.hufs.jae.one:4444/wd/hub") as driver:
+    with SafeSeleniumDriver("http://klook_selenium.hufs.jae.one:1001/wd/hub") as driver:
         for url in urls:
             driver.get(url)
 
