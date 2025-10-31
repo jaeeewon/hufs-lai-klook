@@ -21,6 +21,16 @@ Division of Language & AI, HUFS
             <a href="https://github.com/jaeeewon"><strong>최재원</strong></a>
             <br />
         </td>
+        <td align="center" width="150px">
+            <a href="https://github.com/hwangseoyeon04"><img height="80px"  src="https://avatars.githubusercontent.com/u/231393291?v=4"></a>
+            <br/>
+            <small>Language & AI</small>
+            </br>
+            <small>202400363</small>
+            <br />
+            <a href="https://github.com/hwangseoyeon04"><strong>황서연</strong></a>
+            <br />
+        </td>
     </tr>
 </table>
 
